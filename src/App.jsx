@@ -351,7 +351,7 @@ export default function App() {
               <div className="flex items-baseline justify-between border-b-2 border-white pb-4">
                 <h2 className="text-xl font-black text-white uppercase tracking-widest flex items-center">
                   <Trophy className="mr-3" size={24} strokeWidth={3} />
-                  Radar
+                  Contests
                 </h2>
               </div>
 
