@@ -279,7 +279,7 @@ export default function App() {
 
             <div className="h-12 w-12 flex items-center justify-center border-2 border-white bg-black shrink-0">
                <img 
-                 src="https://ui-avatars.com/api/?name=Manas&background=000&color=fff&bold=true&length=1&font-size=0.5" 
+                 src="/manas-logo.jpg" 
                  alt="Manas Logo" 
                  className="h-full w-full object-cover filter contrast-150"
                />
