@@ -17,9 +17,10 @@ const TRACKED_USERS = [
   { handle: '1crpaCKAGE', name: 'Aman Raj' },
   { handle: 'birnbaunsimonini', name: 'Animesh Datir' },
   { handle: 'artoonic_aditya', name: 'Aditya Chauhan' },
+  // { handle: 'Petr', name: 'Petr Mitrichev' }
 ];
 
-
+e
 const getRatingStyle = (rating) => {
   if (rating < 1200) return 'font-thin italic'; // Newbie
   if (rating < 1400) return 'font-light'; // Pupil
@@ -100,42 +101,42 @@ const fetchCF = async (endpoint, params = {}) => {
 
 const UserCard = ({ user }) => {
   return (
-    <div className="group relative p-6 bg-black border-2 border-white transition-all duration-300 hover:bg-white hover:text-black">
+    <div className="group relative p-4 md:p-6 bg-black border-2 border-white transition-all duration-300 hover:bg-white hover:text-black">
       <div className="flex items-start justify-between">
-        <div className="flex items-start space-x-5 w-full">
-
+        <div className="flex items-start space-x-4 md:space-x-5 w-full">
+ 
           <div className="relative shrink-0">
-            <div className="w-16 h-16 rounded-none overflow-hidden border-2 border-white group-hover:border-black transition-colors bg-black">
+            <div className="w-12 h-12 md:w-16 md:h-16 rounded-none overflow-hidden border-2 border-white group-hover:border-black transition-colors bg-black">
               <img 
                 src={user.titlePhoto !== 'https://userpic.codeforces.org/no-title.jpg' ? user.titlePhoto : user.avatar} 
                 alt={user.handle}
-                className="w-full h-full object-cover  contrast-125"
+                className="w-full h-full object-cover grayscale contrast-125"
               />
             </div>
           </div>
           
-          <div className="flex-1 min-w-0 pt-1">
-            <h3 className={`text-xl truncate ${getRatingStyle(user.rating)}`}>
+          <div className="flex-1 min-w-0 pt-0.5">
+            <h3 className={`text-lg md:text-xl truncate ${getRatingStyle(user.rating)}`}>
               {user.handle}
             </h3>
             
             {user.realName && (
-              <p className="text-sm font-bold mt-1 group-hover:text-black transition-colors">
+              <p className="text-xs md:text-sm font-bold mt-0.5 md:mt-1 group-hover:text-black transition-colors truncate">
                 {user.realName}
               </p>
             )}
 
-            <div className="flex items-center mt-4 space-x-4 text-xs tracking-widest uppercase font-mono">
+            <div className="flex flex-wrap items-center mt-3 gap-x-4 gap-y-2 text-[10px] md:text-xs tracking-widest uppercase font-mono pr-8">
               <div className="flex flex-col">
                 <span className="mb-0.5 opacity-60">Rank</span>
                 <span className="font-bold">{user.rank}</span>
               </div>
-              <div className="w-px h-8 bg-white group-hover:bg-black"></div>
+              <div className="hidden sm:block w-px h-8 bg-white group-hover:bg-black"></div>
               <div className="flex flex-col">
                 <span className="mb-0.5 opacity-60">Rating</span>
                 <span className="font-bold">{user.rating}</span>
               </div>
-              <div className="w-px h-8 bg-white group-hover:bg-black"></div>
+              <div className="hidden sm:block w-px h-8 bg-white group-hover:bg-black"></div>
               <div className="flex flex-col">
                 <span className="mb-0.5 opacity-60">Max</span>
                 <span className="font-bold">{user.maxRating}</span>
@@ -150,9 +151,9 @@ const UserCard = ({ user }) => {
         href={`https://codeforces.com/profile/${user.handle}`}
         target="_blank"
         rel="noopener noreferrer"
-        className="absolute bottom-6 right-6 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-2 group-hover:translate-x-0"
+        className="absolute bottom-4 right-4 md:bottom-6 md:right-6 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-2 group-hover:translate-x-0"
       >
-        <ArrowRight className="text-black" size={24} strokeWidth={3} />
+        <ArrowRight className="text-black" size={20} strokeWidth={3} />
       </a>
     </div>
   );
@@ -274,7 +275,7 @@ export default function App() {
         <div className="max-w-7xl mx-auto px-6 h-24 flex items-center justify-between">
           <div className="flex items-center space-x-6">
             
-
+ 
             <div className="h-12 w-12 flex items-center justify-center border-2 border-white bg-black shrink-0">
                <img 
                  src="https://ui-avatars.com/api/?name=Manas&background=000&color=fff&bold=true&length=1&font-size=0.5" 
