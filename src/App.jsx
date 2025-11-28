@@ -21,7 +21,7 @@ const TRACKED_USERS = [
   // { handle: 'Petr', name: 'Petr Mitrichev' }
 ];
 
-e
+
 const getRatingStyle = (rating) => {
   if (rating < 1200) return 'font-thin italic'; // Newbie
   if (rating < 1400) return 'font-light'; // Pupil
@@ -105,7 +105,7 @@ const UserCard = ({ user }) => {
     <div className="group relative p-4 md:p-6 bg-black border-2 border-white transition-all duration-300 hover:bg-white hover:text-black">
       <div className="flex items-start justify-between">
         <div className="flex items-start space-x-4 md:space-x-5 w-full">
- 
+
           <div className="relative shrink-0">
             <div className="w-12 h-12 md:w-16 md:h-16 rounded-none overflow-hidden border-2 border-white group-hover:border-black transition-colors bg-black">
               <img 
@@ -147,7 +147,7 @@ const UserCard = ({ user }) => {
         </div>
       </div>
       
-      {/* Footer Link */}
+
       <a 
         href={`https://codeforces.com/profile/${user.handle}`}
         target="_blank"
@@ -276,7 +276,7 @@ export default function App() {
         <div className="max-w-7xl mx-auto px-6 h-24 flex items-center justify-between">
           <div className="flex items-center space-x-6">
             
- 
+
             <div className="h-12 w-12 flex items-center justify-center border-2 border-white bg-black shrink-0">
                <img 
                  src="https://ui-avatars.com/api/?name=Manas&background=000&color=fff&bold=true&length=1&font-size=0.5" 
@@ -351,7 +351,7 @@ export default function App() {
               <div className="flex items-baseline justify-between border-b-2 border-white pb-4">
                 <h2 className="text-xl font-black text-white uppercase tracking-widest flex items-center">
                   <Trophy className="mr-3" size={24} strokeWidth={3} />
-                  CONTESTS
+                  Radar
                 </h2>
               </div>
 
