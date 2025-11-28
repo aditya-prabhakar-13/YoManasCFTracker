@@ -111,7 +111,7 @@ const UserCard = ({ user }) => {
               <img 
                 src={user.titlePhoto !== 'https://userpic.codeforces.org/no-title.jpg' ? user.titlePhoto : user.avatar} 
                 alt={user.handle}
-                className="w-full h-full object-cover grayscale contrast-125"
+                className="w-full h-full object-cover contrast-125"
               />
             </div>
           </div>
