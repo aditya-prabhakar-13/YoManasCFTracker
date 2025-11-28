@@ -18,6 +18,7 @@ const TRACKED_USERS = [
   { handle: 'birnbaunsimonini', name: 'Animesh Datir' },
   { handle: 'artoonic_aditya', name: 'Aditya Chauhan' },
   { handle: 'cobra.cpp', name: 'Aniruddha Arya' },
+  { handle: 'AayushRathi', name: 'Aayush Rathi' },
   // { handle: 'Petr', name: 'Petr Mitrichev' }
 ];
 
