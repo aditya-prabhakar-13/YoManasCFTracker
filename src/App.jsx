@@ -5,7 +5,7 @@ import {
   Calendar, 
   Clock, 
   AlertCircle, 
-  TrendingUp, 
+  Target, 
   ExternalLink,
   RefreshCw,
   ArrowRight
@@ -19,19 +19,25 @@ const TRACKED_USERS = [
   { handle: 'artoonic_aditya', name: 'Aditya Chauhan' },
   { handle: 'cobra.cpp', name: 'Aniruddha Arya' },
   { handle: 'AayushRathi', name: 'Aayush Rathi' },
-  // { handle: 'Petr', name: 'Petr Mitrichev' }
+  { handle: 'AdityaPrasadIITG', name: 'Aditya Prasad' },
+];
+
+const NON_ASSOCIATES_USERS = [
+  { handle: 'catastrophic36', name: 'Aditya Deore' },
+  { handle: 'ANirudha27', name: 'Anirudha Pratap Singh' },
+  { handle: 'tyagiabhishek145', name: 'Abhishek Tyagi' },
 ];
 
 
 const getRatingStyle = (rating) => {
-  if (rating < 1200) return 'font-thin italic'; // Newbie
-  if (rating < 1400) return 'font-light'; // Pupil
-  if (rating < 1600) return 'font-normal'; // Specialist
-  if (rating < 1900) return 'font-medium'; // Expert
-  if (rating < 2100) return 'font-bold'; // Candidate Master
-  if (rating < 2300) return 'font-extrabold tracking-wide'; // Master
-  if (rating < 2400) return 'font-black tracking-wide uppercase'; // International Master
-  return 'font-black tracking-widest uppercase underline decoration-2 underline-offset-4'; // Grandmaster+
+  if (rating < 1200) return 'font-thin italic';
+  if (rating < 1400) return 'font-light';
+  if (rating < 1600) return 'font-normal';
+  if (rating < 1900) return 'font-medium';
+  if (rating < 2100) return 'font-bold';
+  if (rating < 2300) return 'font-extrabold tracking-wide';
+  if (rating < 2400) return 'font-black tracking-wide uppercase';
+  return 'font-black tracking-widest uppercase underline decoration-2 underline-offset-4';
 };
 
 const formatTime = (seconds) => {
@@ -162,7 +168,7 @@ const UserCard = ({ user }) => {
 };
 
 const ContestRow = ({ contest }) => {
-  const isApproaching = contest.relativeTimeSeconds > -86400; // < 24h
+  const isApproaching = contest.relativeTimeSeconds > -86400;
   
   return (
     <div className="group relative p-5 bg-black border-2 border-white mb-[-2px] hover:bg-white hover:text-black hover:z-10 transition-all duration-300">
@@ -214,33 +220,47 @@ const ContestRow = ({ contest }) => {
 
 export default function App() {
   const [users, setUsers] = useState([]);
+  const [nonAssociates, setNonAssociates] = useState([]);
   const [contests, setContests] = useState([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [loadingContests, setLoadingContests] = useState(false);
   const [error, setError] = useState(null);
 
   const fetchUsers = useCallback(async () => {
-    if (TRACKED_USERS.length === 0) {
+    const allTrackedUsers = [...TRACKED_USERS, ...NON_ASSOCIATES_USERS];
+    
+    if (allTrackedUsers.length === 0) {
       setUsers([]);
+      setNonAssociates([]);
       return;
     }
     
     setLoadingUsers(true);
     setError(null);
     try {
-      const handles = TRACKED_USERS.map(u => u.handle).join(';');
+      const handles = allTrackedUsers.map(u => u.handle).join(';');
       const result = await fetchCF('user.info', { handles });
       
       const mergedUsers = result.map(apiUser => {
-        const localData = TRACKED_USERS.find(u => u.handle.toLowerCase() === apiUser.handle.toLowerCase());
+        const localData = allTrackedUsers.find(u => u.handle.toLowerCase() === apiUser.handle.toLowerCase());
         return {
           ...apiUser,
           realName: localData ? localData.name : ''
         };
       });
 
-      const sortedUsers = mergedUsers.sort((a, b) => b.rating - a.rating);
-      setUsers(sortedUsers);
+      const associateHandles = new Set(TRACKED_USERS.map(u => u.handle.toLowerCase()));
+      
+      const associates = mergedUsers
+        .filter(u => associateHandles.has(u.handle.toLowerCase()))
+        .sort((a, b) => b.rating - a.rating);
+      
+      const nonAssociatesList = mergedUsers
+        .filter(u => !associateHandles.has(u.handle.toLowerCase()))
+        .sort((a, b) => b.rating - a.rating);
+
+      setUsers(associates);
+      setNonAssociates(nonAssociatesList);
     } catch (err) {
       console.error("User fetch error:", err);
       setError("Failed to fetch user data.");
@@ -282,7 +302,7 @@ export default function App() {
                <img 
                  src="/manas-logo.jpg" 
                  alt="Manas Logo" 
-                 className="h-full w-full object-cover filter contrast-150"
+                 className="w-full h-full object-cover filter contrast-150"
                />
             </div>
 
@@ -314,36 +334,66 @@ export default function App() {
           
 
           <div className="lg:col-span-8 space-y-8">
-            <div className="flex items-baseline justify-between border-b-2 border-white pb-4">
-              <h2 className="text-xl font-black text-white uppercase tracking-widest flex items-center">
-                <Users className="mr-3" size={24} strokeWidth={3} />
-                YO MANAS
-              </h2>
-              <span className="font-mono text-xs font-bold bg-white text-black px-2 py-1">
-                {users.length} MEMBERS
-              </span>
+            
+            <div> 
+                <div className="flex items-baseline justify-between border-b-2 border-white pb-4">
+                  <h2 className="text-xl font-black text-white uppercase tracking-widest flex items-center">
+                    <Users className="mr-3" size={24} strokeWidth={3} />
+                    YO MANAS
+                  </h2>
+                  <span className="font-mono text-xs font-bold bg-white text-black px-2 py-1">
+                    {users.length} MEMBERS
+                  </span>
+                </div>
+
+                {error && (
+                  <div className="p-4 border-2 border-white bg-black text-white text-sm flex items-center font-bold">
+                    <AlertCircle size={20} className="mr-3" />
+                    {error}
+                  </div>
+                )}
+
+                {loadingUsers && users.length === 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+                    {[1, 2, 3, 4].map(i => (
+                      <div key={i} className="h-48 border-2 border-white bg-black animate-pulse opacity-50" />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+                    {users.map(user => (
+                      <UserCard key={user.handle} user={user} />
+                    ))}
+                  </div>
+                )}
+            </div>
+            
+            <div className="pt-12">
+                <div className="flex items-baseline justify-between border-b-2 border-white pb-4">
+                  <h2 className="text-xl font-black text-white uppercase tracking-widest flex items-center">
+                    <Target className="mr-3" size={24} strokeWidth={3} />
+                    NON ASSOCIATES
+                  </h2>
+                  <span className="font-mono text-xs font-bold bg-white text-black px-2 py-1">
+                    {nonAssociates.length} TRACKED
+                  </span>
+                </div>
+                
+                {loadingUsers && nonAssociates.length === 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+                    {[1, 2, 3].map(i => (
+                      <div key={i} className="h-48 border-2 border-white bg-black animate-pulse opacity-50" />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+                    {nonAssociates.map(user => (
+                      <UserCard key={user.handle} user={user} />
+                    ))}
+                  </div>
+                )}
             </div>
 
-            {error && (
-              <div className="p-4 border-2 border-white bg-black text-white text-sm flex items-center font-bold">
-                <AlertCircle size={20} className="mr-3" />
-                {error}
-              </div>
-            )}
-
-            {loadingUsers && users.length === 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {[1, 2, 3, 4].map(i => (
-                  <div key={i} className="h-48 border-2 border-white bg-black animate-pulse opacity-50" />
-                ))}
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {users.map(user => (
-                  <UserCard key={user.handle} user={user} />
-                ))}
-              </div>
-            )}
           </div>
 
 
