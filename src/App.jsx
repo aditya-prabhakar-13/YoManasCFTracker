@@ -217,6 +217,32 @@ const ContestRow = ({ contest }) => {
   );
 };
 
+async function fetchSolveCount(handle) {
+  const submissions = await fetchCF("user.status" , {handle,from: 1,
+    count: 1000});
+
+  const uniqueSolved = new Set();
+  const uniqueSolved24Hr = new Set();
+
+  const now = Math.floor(Date.now()/1000);
+  const last24hr = now - 86400;
+
+  for(let sub of submissions){
+    if(sub.verdict==="OK"){
+      const problemkey = `${sub.problem.contestId}-${sub.problem.index}`;
+      uniqueSolved.add(problemkey);
+
+      if(sub.creationTimeSeconds >= last24hr){
+        uniqueSolved24Hr.add(problemkey);
+      }
+    }
+  }
+
+  return{
+    alltime:uniqueSolved.size,
+    recent:uniqueSolved24Hr.size
+  }
+}
 
 
 export default function App() {
@@ -226,6 +252,11 @@ export default function App() {
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [loadingContests, setLoadingContests] = useState(false);
   const [error, setError] = useState(null);
+
+  const [leaderRecent, setLeaderRecent] = useState([]);
+  const [leaderAllTime, setLeaderAllTime] = useState([]);
+  const [loadingLeader, setLoadingLeader] = useState(false);
+
 
   const fetchUsers = useCallback(async () => {
     const allTrackedUsers = [...TRACKED_USERS, ...NON_ASSOCIATES_USERS];
@@ -285,10 +316,39 @@ export default function App() {
     }
   }, []);
 
+
+  const fetchLeaderboard = useCallback(async ()=>{
+    setLoadingLeader(true);
+
+      const allusers = [...TRACKED_USERS , ...NON_ASSOCIATES_USERS];
+      const results=[];
+
+      for(let user of allusers){
+        try{
+          const stats = await fetchSolveCount(user.handle);
+
+          results.push({
+            handle : user.handle,
+            name : user.name,
+            alltime : stats.alltime,
+            recent : stats.recent
+          });
+        } catch{
+          console.log("Error loading for", user.handle);
+        }
+    }
+
+    setLeaderRecent([...results].sort((a,b) => b.recent - a.recent));
+    setLeaderAllTime([...results].sort((a,b)=> b.alltime - a.alltime));
+
+    setLoadingLeader(false);
+  } , []); 
+
   useEffect(() => {
     fetchUsers();
     fetchContests();
-  }, [fetchUsers, fetchContests]);
+    fetchLeaderboard(); 
+  }, [fetchUsers, fetchContests,fetchLeaderboard]);
 
   return (
     <div className="min-h-screen bg-black text-white font-sans selection:bg-white selection:text-black">
@@ -394,6 +454,61 @@ export default function App() {
                   </div>
                 )}
             </div>
+
+{/* Leaderboard */}
+<div className="pt-12">
+
+  <div className="flex items-baseline justify-between border-b-2 border-white pb-4">
+    <h2 className="text-xl font-black text-white uppercase tracking-widest flex items-center">
+      <Trophy className="mr-3" size={24} strokeWidth={3} />
+      Leaderboard
+    </h2>
+  </div>
+
+  {loadingLeader ? (
+    <div className="p-6 font-mono text-sm">Calculating solves...</div>
+  ) : (
+    <div className="mt-6 space-y-10">
+      
+      <div>
+        <h3 className="font-bold uppercase tracking-wider text-xs mb-3 opacity-70">
+          Recent — Last 24 Hours
+        </h3>
+        <div className="border-2 border-white">
+          {leaderRecent.map((u, i) => (
+            <div 
+              key={u.handle}
+              className="flex justify-between px-4 py-3 border-b border-white/20 hover:bg-white hover:text-black transition-all"
+            >
+              <span className="font-bold">{i + 1}. {u.handle}</span>
+              <span className="font-mono font-bold">{u.recent} solved</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <h3 className="font-bold uppercase tracking-wider text-xs mb-3 opacity-70">
+          All Time Solves
+        </h3>
+        <div className="border-2 border-white">
+          {leaderAllTime.map((u, i) => (
+            <div 
+              key={u.handle}
+              className="flex justify-between px-4 py-3 border-b border-white/20 hover:bg-white hover:text-black transition-all"
+            >
+              <span className="font-bold">{i + 1}. {u.handle}</span>
+              <span className="font-mono font-bold">{u.alltime} solved</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+    </div>
+  )}
+
+</div>
+
 
           </div>
 
