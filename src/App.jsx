@@ -27,6 +27,8 @@ const NON_ASSOCIATES_USERS = [
   { handle: 'catastrophic36', name: 'Aditya Deore' },
   { handle: 'ANirudha27', name: 'Anirudha Pratap Singh' },
   { handle: 'tyagiabhishek145', name: 'Abhishek Tyagi' },
+  { handle: 'Jahnavi.jnv', name: 'Jahnavi Priya' },
+
 ];
 
 
