@@ -77,7 +77,9 @@ const getTimeRemaining = (startTimeSeconds) => {
 
 
 const fetchCF = async (endpoint, params = {}) => {
-  const queryString = new URLSearchParams(params).toString();
+  // Add a random timestamp to prevent caching by the proxy server
+  const cacheBuster = Math.floor(Date.now() / 1000);
+  const queryString = new URLSearchParams({ ...params, _: cacheBuster }).toString();
   const targetUrl = `https://codeforces.com/api/${endpoint}?${queryString}`;
   
   const strategies = [
@@ -221,8 +223,7 @@ const ContestRow = ({ contest }) => {
 };
 
 async function fetchSolveCount(handle) {
-  const submissions = await fetchCF("user.status" , {handle,from: 1,
-    count: 1000});
+  const submissions = await fetchCF("user.status" , {handle, from: 1, count: 5000}); // Increased count to catch more history
 
   const uniqueSolved = new Set();
   const uniqueSolved24Hr = new Set();
@@ -320,32 +321,37 @@ export default function App() {
   }, []);
 
 
-  const fetchLeaderboard = useCallback(async ()=>{
+  const fetchLeaderboard = useCallback(async () => {
     setLoadingLeader(true);
+    const allusers = [...TRACKED_USERS, ...NON_ASSOCIATES_USERS];
 
-      const allusers = [...TRACKED_USERS , ...NON_ASSOCIATES_USERS];
-      const results=[];
-
-      for(let user of allusers){
-        try{
+    try {
+      // Parallel execution: fetch all users at once
+      const promises = allusers.map(async (user) => {
+        try {
           const stats = await fetchSolveCount(user.handle);
-
-          results.push({
-            handle : user.handle,
-            name : user.name,
-            alltime : stats.alltime,
-            recent : stats.recent
-          });
-        } catch{
-          console.log("Error loading for", user.handle);
+          return {
+            handle: user.handle,
+            name: user.name,
+            alltime: stats.alltime,
+            recent: stats.recent
+          };
+        } catch (err) {
+          console.warn(`Failed to fetch stats for ${user.handle}`, err);
+          return null; 
         }
+      });
+
+      const results = (await Promise.all(promises)).filter(Boolean); // Remove failed requests
+
+      setLeaderRecent([...results].sort((a, b) => b.recent - a.recent));
+      setLeaderAllTime([...results].sort((a, b) => b.alltime - a.alltime));
+    } catch (err) {
+      console.error("Leaderboard error:", err);
+    } finally {
+      setLoadingLeader(false);
     }
-
-    setLeaderRecent([...results].sort((a,b) => b.recent - a.recent));
-    setLeaderAllTime([...results].sort((a,b)=> b.alltime - a.alltime));
-
-    setLoadingLeader(false);
-  } , []); 
+  }, []);
 
   useEffect(() => {
     fetchUsers();
@@ -383,11 +389,11 @@ export default function App() {
 
           <div>
              <button 
-                onClick={() => { fetchUsers(); fetchContests(); }}
+                onClick={() => { fetchUsers(); fetchContests(); fetchLeaderboard(); }}
                 className="group p-3 bg-black hover:bg-white hover:text-black transition-all duration-300 border-2 border-white"
                 title="Refresh Data"
              >
-               <RefreshCw size={20} strokeWidth={3} className={`transition-transform duration-700 ${loadingUsers || loadingContests ? "animate-spin" : "group-hover:rotate-180"}`} />
+               <RefreshCw size={20} strokeWidth={3} className={`transition-transform duration-700 ${loadingUsers || loadingContests || loadingLeader ? "animate-spin" : "group-hover:rotate-180"}`} />
              </button>
           </div>
         </div>
@@ -469,7 +475,7 @@ export default function App() {
   </div>
 
   {loadingLeader ? (
-    <div className="p-6 font-mono text-sm">Calculating solves...</div>
+    <div className="p-6 font-mono text-sm animate-pulse">Syncing Leaderboard...</div>
   ) : (
     <div className="mt-6 space-y-10">
       
