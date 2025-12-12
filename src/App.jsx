@@ -20,7 +20,7 @@ const TRACKED_USERS = [
   { handle: 'cobra.cpp', name: 'Aniruddha Arya' },
   { handle: 'AayushRathi', name: 'Aayush Rathi' },
   { handle: 'AdityaPrasadIITG', name: 'Aditya Prasad' },
-  { handle: 'achy2005', name: 'Achyuth Ahmad' },
+  { handle: 'achyuth_a_', name: 'Achyuth A' },
 ];
 
 const NON_ASSOCIATES_USERS = [
