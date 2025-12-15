@@ -21,6 +21,7 @@ const TRACKED_USERS = [
   { handle: 'AayushRathi', name: 'Aayush Rathi' },
   { handle: 'AdityaPrasadIITG', name: 'Aditya Prasad' },
   { handle: 'achyuth_a_', name: 'Achyuth A' },
+  
 ];
 
 const NON_ASSOCIATES_USERS = [
@@ -29,7 +30,8 @@ const NON_ASSOCIATES_USERS = [
   { handle: 'tyagiabhishek145', name: 'Abhishek Tyagi' },
   { handle: 'Jahnavi.jnv', name: 'Jahnavi Priya' },
   { handle: 'fywer', name: 'Aditya D. Kakade' },
-
+  { handle: 'd33p_singh', name: 'Deepenedra' },
+  { handle: 'debugger6010', name: 'Aquib Aquil' },
 ];
 
 
