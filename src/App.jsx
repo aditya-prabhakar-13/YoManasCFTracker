@@ -32,6 +32,7 @@ const NON_ASSOCIATES_USERS = [
   { handle: 'fywer', name: 'Aditya D. Kakade' },
   { handle: 'd33p_singh', name: 'Deepenedra' },
   { handle: 'debugger6010', name: 'Aquib Aquil' },
+  { handle: 'Aadhith_R', name: 'Aadhith R' },
 ];
 
 
