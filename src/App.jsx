@@ -19,7 +19,7 @@ const TRACKED_USERS = [
   { handle: 'cobra.cpp', name: 'Aniruddha Arya' },
   { handle: 'AayushRathi', name: 'Aayush Rathi' },
   { handle: 'AdityaPrasadIITG', name: 'Aditya Prasad' },
-  { handle: 'achyuth_a_', name: 'Achyuth A' },
+  { handle: 'achy2005', name: 'Achyuth A' },
 ];
 
 const NON_ASSOCIATES_USERS = [
@@ -32,6 +32,7 @@ const NON_ASSOCIATES_USERS = [
   { handle: 'debugger6010', name: 'Aquib Aquil' },
   { handle: 'Aadhith_R', name: 'Aadhith R' },
   { handle: 'amank_24', name: 'Aman Kumar (Gaddar)' },
+  { handle: 'dredgarheisenberg24', name: 'Aniket Mandal' },
 ];
 
 const getRatingStyle = (rating) => {
