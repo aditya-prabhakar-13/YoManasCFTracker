@@ -11,7 +11,6 @@ import {
   ArrowRight
 } from 'lucide-react';
 
-
 const TRACKED_USERS = [
   { handle: 'BurningBeast', name: 'Aditya Prabhakar' },
   { handle: '1crpaCKAGE', name: 'Aman Raj' },
@@ -21,7 +20,6 @@ const TRACKED_USERS = [
   { handle: 'AayushRathi', name: 'Aayush Rathi' },
   { handle: 'AdityaPrasadIITG', name: 'Aditya Prasad' },
   { handle: 'achyuth_a_', name: 'Achyuth A' },
-  
 ];
 
 const NON_ASSOCIATES_USERS = [
@@ -35,7 +33,6 @@ const NON_ASSOCIATES_USERS = [
   { handle: 'Aadhith_R', name: 'Aadhith R' },
   { handle: 'amank_24', name: 'Aman Kumar (Gaddar)' },
 ];
-
 
 const getRatingStyle = (rating) => {
   if (rating < 1200) return 'font-thin italic';
@@ -79,19 +76,23 @@ const getTimeRemaining = (startTimeSeconds) => {
   return `${hours}h ${minutes}m`;
 };
 
+// --- ROBUST FETCHING LOGIC ---
 
-const fetchCF = async (endpoint, params = {}) => {
-  // Add a random timestamp to prevent caching by the proxy server
+const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+const fetchCF = async (endpoint, params = {}, retries = 3) => {
   const cacheBuster = Math.floor(Date.now() / 1000);
   const queryString = new URLSearchParams({ ...params, _: cacheBuster }).toString();
   const targetUrl = `https://codeforces.com/api/${endpoint}?${queryString}`;
   
   const strategies = [
     {
+      name: 'AllOrigins',
       url: (u) => `https://api.allorigins.win/get?url=${encodeURIComponent(u)}`,
       transform: (data) => JSON.parse(data.contents)
     },
     {
+      name: 'CodeTabs',
       url: (u) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
       transform: (data) => data
     }
@@ -99,30 +100,70 @@ const fetchCF = async (endpoint, params = {}) => {
 
   let lastError = null;
 
+  // Try each proxy strategy
   for (const strategy of strategies) {
-    try {
-      const proxyUrl = strategy.url(targetUrl);
-      const response = await fetch(proxyUrl);
-      if (!response.ok) throw new Error(`Proxy error`);
-      const rawData = await response.json();
-      const resultData = strategy.transform(rawData);
-      if (resultData.status === 'OK') return resultData.result;
-      else throw new Error(resultData.comment || 'API Error');
-    } catch (err) {
-      lastError = err;
+    // Retry logic per strategy
+    for (let i = 0; i < retries; i++) {
+      try {
+        const proxyUrl = strategy.url(targetUrl);
+        const response = await fetch(proxyUrl);
+        
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        
+        const rawData = await response.json();
+        const resultData = strategy.transform(rawData);
+
+        if (resultData.status === 'OK') {
+          return resultData.result;
+        } else {
+          // If API returns explicit error (like handle not found), don't retry
+          throw new Error(resultData.comment || 'API Error');
+        }
+      } catch (err) {
+        lastError = err;
+        console.warn(`Attempt ${i + 1} failed with ${strategy.name}: ${err.message}`);
+        // Wait before retrying (exponential backoff: 500ms, 1000ms, 2000ms)
+        if (i < retries - 1) await delay(500 * Math.pow(2, i));
+      }
     }
   }
-  throw lastError || new Error('Connection failed.');
+  
+  throw lastError || new Error('All connection attempts failed.');
 };
 
+async function fetchSolveCount(handle) {
+  try {
+    const submissions = await fetchCF("user.status", { handle, from: 1, count: 5000 });
+    
+    const uniqueSolved = new Set();
+    const uniqueSolved24Hr = new Set();
+    const now = Math.floor(Date.now() / 1000);
+    const last24hr = now - 86400;
 
+    for (let sub of submissions) {
+      if (sub.verdict === "OK") {
+        const problemkey = `${sub.problem.contestId}-${sub.problem.index}`;
+        uniqueSolved.add(problemkey);
+        if (sub.creationTimeSeconds >= last24hr) {
+          uniqueSolved24Hr.add(problemkey);
+        }
+      }
+    }
+
+    return { alltime: uniqueSolved.size, recent: uniqueSolved24Hr.size };
+  } catch (error) {
+    console.warn(`Could not fetch stats for ${handle}`, error);
+    return null; // Return null to indicate failure for this user
+  }
+}
+
+// --- COMPONENTS ---
 
 const UserCard = ({ user }) => {
   return (
     <div className="group relative p-4 md:p-6 bg-black border-2 border-white transition-all duration-300 hover:bg-white hover:text-black">
       <div className="flex items-start justify-between">
         <div className="flex items-start space-x-4 md:space-x-5 w-full">
-
           <div className="relative shrink-0">
             <div className="w-12 h-12 md:w-16 md:h-16 rounded-none overflow-hidden border-2 border-white group-hover:border-black transition-colors bg-black">
               <img 
@@ -137,13 +178,11 @@ const UserCard = ({ user }) => {
             <h3 className={`text-lg md:text-xl truncate ${getRatingStyle(user.rating)}`}>
               {user.handle}
             </h3>
-            
             {user.realName && (
               <p className="text-xs md:text-sm font-bold mt-0.5 md:mt-1 group-hover:text-black transition-colors truncate">
                 {user.realName}
               </p>
             )}
-
             <div className="flex flex-wrap items-center mt-3 gap-x-4 gap-y-2 text-[10px] md:text-xs tracking-widest uppercase font-mono pr-8">
               <div className="flex flex-col">
                 <span className="mb-0.5 opacity-60">Rank</span>
@@ -163,8 +202,6 @@ const UserCard = ({ user }) => {
           </div>
         </div>
       </div>
-      
-
       <a 
         href={`https://codeforces.com/profile/${user.handle}`}
         target="_blank"
@@ -179,7 +216,6 @@ const UserCard = ({ user }) => {
 
 const ContestRow = ({ contest }) => {
   const isApproaching = contest.relativeTimeSeconds > -86400;
-  
   return (
     <div className="group relative p-5 bg-black border-2 border-white mb-[-2px] hover:bg-white hover:text-black hover:z-10 transition-all duration-300">
       <div className="flex flex-col gap-3">
@@ -193,7 +229,6 @@ const ContestRow = ({ contest }) => {
             </span>
           )}
         </div>
-
         <div className="flex items-end justify-between mt-2 border-t-2 border-white/20 group-hover:border-black/20 pt-2">
           <div className="space-y-1">
             <div className="flex items-center text-xs font-mono">
@@ -205,7 +240,6 @@ const ContestRow = ({ contest }) => {
               {formatDuration(contest.durationSeconds)}
             </div>
           </div>
-          
           <div className="text-right">
              <p className="text-[9px] uppercase tracking-widest mb-1 opacity-60">Begins In</p>
              <p className="font-mono text-sm font-bold">
@@ -214,7 +248,6 @@ const ContestRow = ({ contest }) => {
           </div>
         </div>
       </div>
-      
       <a 
         href={`https://codeforces.com/contests/${contest.id}`}
         target="_blank"
@@ -225,33 +258,6 @@ const ContestRow = ({ contest }) => {
     </div>
   );
 };
-
-async function fetchSolveCount(handle) {
-  const submissions = await fetchCF("user.status" , {handle, from: 1, count: 5000}); // Increased count to catch more history
-
-  const uniqueSolved = new Set();
-  const uniqueSolved24Hr = new Set();
-
-  const now = Math.floor(Date.now()/1000);
-  const last24hr = now - 86400;
-
-  for(let sub of submissions){
-    if(sub.verdict==="OK"){
-      const problemkey = `${sub.problem.contestId}-${sub.problem.index}`;
-      uniqueSolved.add(problemkey);
-
-      if(sub.creationTimeSeconds >= last24hr){
-        uniqueSolved24Hr.add(problemkey);
-      }
-    }
-  }
-
-  return{
-    alltime:uniqueSolved.size,
-    recent:uniqueSolved24Hr.size
-  }
-}
-
 
 export default function App() {
   const [users, setUsers] = useState([]);
@@ -264,7 +270,6 @@ export default function App() {
   const [leaderRecent, setLeaderRecent] = useState([]);
   const [leaderAllTime, setLeaderAllTime] = useState([]);
   const [loadingLeader, setLoadingLeader] = useState(false);
-
 
   const fetchUsers = useCallback(async () => {
     const allTrackedUsers = [...TRACKED_USERS, ...NON_ASSOCIATES_USERS];
@@ -279,7 +284,8 @@ export default function App() {
     setError(null);
     try {
       const handles = allTrackedUsers.map(u => u.handle).join(';');
-      const result = await fetchCF('user.info', { handles });
+      // Increased retries for initial user load
+      const result = await fetchCF('user.info', { handles }, 5);
       
       const mergedUsers = result.map(apiUser => {
         const localData = allTrackedUsers.find(u => u.handle.toLowerCase() === apiUser.handle.toLowerCase());
@@ -303,7 +309,7 @@ export default function App() {
       setNonAssociates(nonAssociatesList);
     } catch (err) {
       console.error("User fetch error:", err);
-      setError("Failed to fetch user data.");
+      setError("Connection unstable. Some data may be missing.");
     } finally {
       setLoadingUsers(false);
     }
@@ -312,44 +318,56 @@ export default function App() {
   const fetchContests = useCallback(async () => {
     setLoadingContests(true);
     try {
-      const result = await fetchCF('contest.list', { gym: false });
+      // Robust fetch with more retries
+      const result = await fetchCF('contest.list', { gym: false }, 5);
       const upcoming = result
         .filter(c => c.phase === 'BEFORE')
         .sort((a, b) => a.startTimeSeconds - b.startTimeSeconds);
       setContests(upcoming);
     } catch (err) {
       console.error("Contest fetch error:", err);
+      // Don't clear old contests on error if we have them
+      setContests(prev => prev.length > 0 ? prev : []);
     } finally {
       setLoadingContests(false);
     }
   }, []);
-
 
   const fetchLeaderboard = useCallback(async () => {
     setLoadingLeader(true);
     const allusers = [...TRACKED_USERS, ...NON_ASSOCIATES_USERS];
 
     try {
-      // Parallel execution: fetch all users at once
-      const promises = allusers.map(async (user) => {
-        try {
-          const stats = await fetchSolveCount(user.handle);
-          return {
-            handle: user.handle,
-            name: user.name,
-            alltime: stats.alltime,
-            recent: stats.recent
-          };
-        } catch (err) {
-          console.warn(`Failed to fetch stats for ${user.handle}`, err);
-          return null; 
-        }
-      });
+      // Chunking Logic: Process users in batches of 3 to avoid rate limits
+      const chunkSize = 3;
+      let allStats = [];
 
-      const results = (await Promise.all(promises)).filter(Boolean); // Remove failed requests
+      for (let i = 0; i < allusers.length; i += chunkSize) {
+        const chunk = allusers.slice(i, i + chunkSize);
+        
+        // Fetch current chunk in parallel
+        const chunkResults = await Promise.all(
+          chunk.map(async (user) => {
+            const stats = await fetchSolveCount(user.handle);
+            if (!stats) return null;
+            return {
+              handle: user.handle,
+              name: user.name,
+              alltime: stats.alltime,
+              recent: stats.recent
+            };
+          })
+        );
+        
+        allStats = [...allStats, ...chunkResults.filter(Boolean)];
+        
+        // Wait 500ms between chunks to be nice to the API/Proxy
+        if (i + chunkSize < allusers.length) await delay(500);
+      }
 
-      setLeaderRecent([...results].sort((a, b) => b.recent - a.recent));
-      setLeaderAllTime([...results].sort((a, b) => b.alltime - a.alltime));
+      setLeaderRecent([...allStats].sort((a, b) => b.recent - a.recent));
+      setLeaderAllTime([...allStats].sort((a, b) => b.alltime - a.alltime));
+
     } catch (err) {
       console.error("Leaderboard error:", err);
     } finally {
@@ -361,17 +379,13 @@ export default function App() {
     fetchUsers();
     fetchContests();
     fetchLeaderboard(); 
-  }, [fetchUsers, fetchContests,fetchLeaderboard]);
+  }, [fetchUsers, fetchContests, fetchLeaderboard]);
 
   return (
     <div className="min-h-screen bg-black text-white font-sans selection:bg-white selection:text-black">
-      
-
       <header className="border-b-2 border-white bg-black sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 h-24 flex items-center justify-between">
           <div className="flex items-center space-x-6">
-            
-
             <div className="h-12 w-12 flex items-center justify-center border-2 border-white bg-black shrink-0">
                <img 
                  src="/manas-logo.jpg" 
@@ -406,9 +420,7 @@ export default function App() {
       <main className="max-w-7xl mx-auto px-6 py-12">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
           
-
           <div className="lg:col-span-8 space-y-8">
-            
             <div> 
                 <div className="flex items-baseline justify-between border-b-2 border-white pb-4">
                   <h2 className="text-xl font-black text-white uppercase tracking-widest flex items-center">
@@ -468,63 +480,60 @@ export default function App() {
                 )}
             </div>
 
-{/* Leaderboard */}
-<div className="pt-12">
+            {/* Leaderboard */}
+            <div className="pt-12">
+              <div className="flex items-baseline justify-between border-b-2 border-white pb-4">
+                <h2 className="text-xl font-black text-white uppercase tracking-widest flex items-center">
+                  <Trophy className="mr-3" size={24} strokeWidth={3} />
+                  Leaderboard
+                </h2>
+              </div>
 
-  <div className="flex items-baseline justify-between border-b-2 border-white pb-4">
-    <h2 className="text-xl font-black text-white uppercase tracking-widest flex items-center">
-      <Trophy className="mr-3" size={24} strokeWidth={3} />
-      Leaderboard
-    </h2>
-  </div>
+              {loadingLeader ? (
+                <div className="p-6 font-mono text-sm animate-pulse">Syncing Leaderboard... (Processed in batches to ensure accuracy)</div>
+              ) : (
+                <div className="mt-6 space-y-10">
+                  <div>
+                    <h3 className="font-bold uppercase tracking-wider text-xs mb-3 opacity-70">
+                      Recent — Last 24 Hours
+                    </h3>
+                    <div className="border-2 border-white">
+                      {leaderRecent.length > 0 ? leaderRecent.map((u, i) => (
+                        <div 
+                          key={u.handle}
+                          className="flex justify-between px-4 py-3 border-b border-white/20 hover:bg-white hover:text-black transition-all"
+                        >
+                          <span className="font-bold">{i + 1}. {u.handle}</span>
+                          <span className="font-mono font-bold">{u.recent} solved</span>
+                        </div>
+                      )) : (
+                        <div className="p-4 text-center text-sm font-mono opacity-50">No data available</div>
+                      )}
+                    </div>
+                  </div>
 
-  {loadingLeader ? (
-    <div className="p-6 font-mono text-sm animate-pulse">Syncing Leaderboard...</div>
-  ) : (
-    <div className="mt-6 space-y-10">
-      
-      <div>
-        <h3 className="font-bold uppercase tracking-wider text-xs mb-3 opacity-70">
-          Recent — Last 24 Hours
-        </h3>
-        <div className="border-2 border-white">
-          {leaderRecent.map((u, i) => (
-            <div 
-              key={u.handle}
-              className="flex justify-between px-4 py-3 border-b border-white/20 hover:bg-white hover:text-black transition-all"
-            >
-              <span className="font-bold">{i + 1}. {u.handle}</span>
-              <span className="font-mono font-bold">{u.recent} solved</span>
+                  <div>
+                    <h3 className="font-bold uppercase tracking-wider text-xs mb-3 opacity-70">
+                      All Time Solves
+                    </h3>
+                    <div className="border-2 border-white">
+                      {leaderAllTime.length > 0 ? leaderAllTime.map((u, i) => (
+                        <div 
+                          key={u.handle}
+                          className="flex justify-between px-4 py-3 border-b border-white/20 hover:bg-white hover:text-black transition-all"
+                        >
+                          <span className="font-bold">{i + 1}. {u.handle}</span>
+                          <span className="font-mono font-bold">{u.alltime} solved</span>
+                        </div>
+                      )) : (
+                         <div className="p-4 text-center text-sm font-mono opacity-50">No data available</div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
-          ))}
-        </div>
-      </div>
-
-      <div>
-        <h3 className="font-bold uppercase tracking-wider text-xs mb-3 opacity-70">
-          All Time Solves
-        </h3>
-        <div className="border-2 border-white">
-          {leaderAllTime.map((u, i) => (
-            <div 
-              key={u.handle}
-              className="flex justify-between px-4 py-3 border-b border-white/20 hover:bg-white hover:text-black transition-all"
-            >
-              <span className="font-bold">{i + 1}. {u.handle}</span>
-              <span className="font-mono font-bold">{u.alltime} solved</span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-    </div>
-  )}
-
-</div>
-
-
           </div>
-
 
           <div className="lg:col-span-4">
             <div className="lg:sticky lg:top-32 space-y-8">
@@ -552,6 +561,7 @@ export default function App() {
                   <div className="p-12 text-center border-x-2 border-b-2 border-white">
                     <Calendar size={32} className="mx-auto mb-4" strokeWidth={1} />
                     <p className="text-xs uppercase tracking-widest font-bold">No active signals</p>
+                    <button onClick={fetchContests} className="mt-4 text-xs underline font-mono">Retry Signal</button>
                   </div>
                 )}
                 
