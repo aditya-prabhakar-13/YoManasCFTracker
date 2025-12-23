@@ -83,46 +83,58 @@ const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 const fetchCF = async (endpoint, params = {}, retries = 3) => {
   const cacheBuster = Math.floor(Date.now() / 1000);
   const queryString = new URLSearchParams({ ...params, _: cacheBuster }).toString();
-  const targetUrl = `https://codeforces.com/api/${endpoint}?${queryString}`;
+  
+  // Strategy 1: Vercel Rewrite (Primary for Production)
+  // Strategy 2: CorsProxy.io (Stable Fallback)
+  // Strategy 3: CodeTabs (Backup)
   
   const strategies = [
     {
-      name: 'AllOrigins',
-      url: (u) => `https://api.allorigins.win/get?url=${encodeURIComponent(u)}`,
-      transform: (data) => JSON.parse(data.contents)
+      name: 'Vercel Proxy',
+      url: (u) => `/api/cf/${endpoint}?${queryString}`, // Relies on vercel.json rewrite
+      transform: (data) => data
+    },
+    {
+      name: 'CorsProxy',
+      url: (u) => `https://corsproxy.io/?${encodeURIComponent(`https://codeforces.com/api/${endpoint}?${queryString}`)}`,
+      transform: (data) => data
     },
     {
       name: 'CodeTabs',
-      url: (u) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
+      url: (u) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(`https://codeforces.com/api/${endpoint}?${queryString}`)}`,
       transform: (data) => data
     }
   ];
 
   let lastError = null;
 
-  // Try each proxy strategy
   for (const strategy of strategies) {
-    // Retry logic per strategy
     for (let i = 0; i < retries; i++) {
       try {
-        const proxyUrl = strategy.url(targetUrl);
-        const response = await fetch(proxyUrl);
+        const fetchUrl = strategy.url();
+        const response = await fetch(fetchUrl);
         
+        // If 404 on Vercel Proxy, it means we are on local dev without vercel dev, skip to next strategy
+        if (strategy.name === 'Vercel Proxy' && response.status === 404) {
+          throw new Error('Vercel Proxy not found (Local Dev)');
+        }
+
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         
-        const rawData = await response.json();
-        const resultData = strategy.transform(rawData);
+        const resultData = await response.json();
 
+        // CF API returns { status: "OK", result: ... }
         if (resultData.status === 'OK') {
           return resultData.result;
         } else {
-          // If API returns explicit error (like handle not found), don't retry
           throw new Error(resultData.comment || 'API Error');
         }
       } catch (err) {
         lastError = err;
-        console.warn(`Attempt ${i + 1} failed with ${strategy.name}: ${err.message}`);
-        // Wait before retrying (exponential backoff: 500ms, 1000ms, 2000ms)
+        // Don't retry Vercel proxy if it's missing (local dev), just move to next strategy immediately
+        if (err.message.includes('Vercel Proxy')) break;
+        
+        // console.warn(`Attempt ${i + 1} failed with ${strategy.name}`);
         if (i < retries - 1) await delay(500 * Math.pow(2, i));
       }
     }
@@ -153,7 +165,7 @@ async function fetchSolveCount(handle) {
     return { alltime: uniqueSolved.size, recent: uniqueSolved24Hr.size };
   } catch (error) {
     console.warn(`Could not fetch stats for ${handle}`, error);
-    return null; // Return null to indicate failure for this user
+    return null; 
   }
 }
 
@@ -284,7 +296,6 @@ export default function App() {
     setError(null);
     try {
       const handles = allTrackedUsers.map(u => u.handle).join(';');
-      // Increased retries for initial user load
       const result = await fetchCF('user.info', { handles }, 5);
       
       const mergedUsers = result.map(apiUser => {
@@ -318,7 +329,6 @@ export default function App() {
   const fetchContests = useCallback(async () => {
     setLoadingContests(true);
     try {
-      // Robust fetch with more retries
       const result = await fetchCF('contest.list', { gym: false }, 5);
       const upcoming = result
         .filter(c => c.phase === 'BEFORE')
@@ -326,7 +336,6 @@ export default function App() {
       setContests(upcoming);
     } catch (err) {
       console.error("Contest fetch error:", err);
-      // Don't clear old contests on error if we have them
       setContests(prev => prev.length > 0 ? prev : []);
     } finally {
       setLoadingContests(false);
@@ -338,14 +347,12 @@ export default function App() {
     const allusers = [...TRACKED_USERS, ...NON_ASSOCIATES_USERS];
 
     try {
-      // Chunking Logic: Process users in batches of 3 to avoid rate limits
       const chunkSize = 3;
       let allStats = [];
 
       for (let i = 0; i < allusers.length; i += chunkSize) {
         const chunk = allusers.slice(i, i + chunkSize);
         
-        // Fetch current chunk in parallel
         const chunkResults = await Promise.all(
           chunk.map(async (user) => {
             const stats = await fetchSolveCount(user.handle);
@@ -360,8 +367,6 @@ export default function App() {
         );
         
         allStats = [...allStats, ...chunkResults.filter(Boolean)];
-        
-        // Wait 500ms between chunks to be nice to the API/Proxy
         if (i + chunkSize < allusers.length) await delay(500);
       }
 

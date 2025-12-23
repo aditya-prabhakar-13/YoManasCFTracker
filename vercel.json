@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/cf/:path*",
+      "destination": "https://codeforces.com/api/:path*"
+    }
+  ]
+}
