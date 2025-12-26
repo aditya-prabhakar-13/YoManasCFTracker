@@ -33,6 +33,7 @@ const NON_ASSOCIATES_USERS = [
   { handle: 'Aadhith_R', name: 'Aadhith R' },
   { handle: 'amank_24', name: 'Aman Kumar (Gaddar)' },
   { handle: 'dredgarheisenberg24', name: 'Aniket Mandal' },
+  { handle: 'GoldenOriole', name: 'Pratyaksha Jha' },
 ];
 
 const getRatingStyle = (rating) => {
