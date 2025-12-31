@@ -14,23 +14,23 @@ import {
 const TRACKED_USERS = [
   { handle: 'BurningBeast', name: 'Aditya Prabhakar' },
   { handle: '1crpaCKAGE', name: 'Aman Raj' },
-  { handle: 'birnbaunsimonini', name: 'Animesh Datir' },
-  { handle: 'artoonic_aditya', name: 'Aditya Chauhan' },
+  { handle: 'birnbaumsimonini', name: 'Animesh Datir' },
+  { handle: 'artoonicpp', name: 'Aditya Chauhan' },
   { handle: 'cobra.cpp', name: 'Aniruddha Arya' },
   { handle: 'AayushRathi', name: 'Aayush Rathi' },
   { handle: 'AdityaPrasadIITG', name: 'Aditya Prasad' },
   { handle: 'achy2005', name: 'Achyuth A' },
+  { handle: 'debugger6010', name: 'Aquib Aquil' },
 ];
 
 const NON_ASSOCIATES_USERS = [
   { handle: 'catastrophic36', name: 'Aditya Deore' },
   { handle: 'ANirudha27', name: 'Anirudha Pratap Singh' },
-  { handle: 'tyagiabhishek145', name: 'Abhishek Tyagi' },
+  { handle: 'Satoshi_Gekkouga', name: 'Abhishek Tyagi' },
   { handle: 'Jahnavi.jnv', name: 'Jahnavi Priya' },
   { handle: 'fywer', name: 'Aditya D. Kakade' },
   { handle: 'd33p_singh', name: 'Deepenedra' },
-  { handle: 'debugger6010', name: 'Aquib Aquil' },
-  { handle: 'Aadhith_R', name: 'Aadhith R' },
+  { handle: 'Nova85', name: 'Aadhith R' },
   { handle: 'amank_24', name: 'Aman Kumar (Gaddar)' },
   { handle: 'dredgarheisenberg24', name: 'Aniket Mandal' },
   { handle: 'GoldenOriole', name: 'Pratyaksha Jha' },
