@@ -8,7 +8,8 @@ import {
   Target, 
   ExternalLink,
   RefreshCw,
-  ArrowRight
+  ArrowRight,
+  Lock,
 } from 'lucide-react';
 
 const TRACKED_USERS = [
@@ -273,7 +274,105 @@ const ContestRow = ({ contest }) => {
   );
 };
 
+// --- SECURITY CONFIGURATION ---
+const SECURITY_CONFIG = {
+  // CHANGE THESE PASSWORDS
+  UNLIMITED_PASS: "MANAS_ADMIN", 
+  LIMITED_PASS: "GUEST_ACCESS",
+  DAILY_LIMIT: 10,
+  STORAGE_KEY: "manas_tracker_access_log"
+};
+
+const LoginScreen = ({ onLogin }) => {
+  const [input, setInput] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [shake, setShake] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+
+    try {
+      const res = await fetch('/api/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: input })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        // This catches 401 (Invalid) and 429 (Limit Exceeded) errors
+        // and uses the message sent from the server
+        throw new Error(data.message || "ACCESS DENIED");
+      }
+
+      if (data.success) {
+        onLogin(true);
+      }
+
+    } catch (err) {
+      setError(err.message.toUpperCase());
+      setShake(true);
+      setTimeout(() => setShake(false), 500);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-4 font-sans">
+      <div className={`w-full max-w-md p-8 border-2 border-white bg-black ${shake ? 'animate-pulse' : ''}`}>
+        <div className="text-center mb-8">
+          <div className="h-16 w-16 bg-white mx-auto mb-4 flex items-center justify-center">
+            <Lock size={32} className="text-black" strokeWidth={3} />
+          </div>
+          <h1 className="text-2xl font-black uppercase tracking-widest">Restricted Area</h1>
+          <p className="text-xs font-mono mt-2 opacity-60">Authentication Required</p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div>
+            <input 
+              type="password" 
+              value={input}
+              onChange={(e) => { setInput(e.target.value); setError(""); }}
+              className="w-full bg-black border-2 border-white p-4 text-center font-mono text-xl focus:outline-none focus:bg-white focus:text-black transition-colors placeholder:text-gray-600 disabled:opacity-50"
+              placeholder="ENTER PASSCODE"
+              autoFocus
+              disabled={loading}
+            />
+          </div>
+
+          {error && (
+            <div className="flex items-center justify-center text-red-500 font-bold text-xs uppercase tracking-widest">
+              <AlertCircle size={16} className="mr-2" />
+              {error}
+            </div>
+          )}
+
+          <button 
+            type="submit"
+            disabled={loading}
+            className="w-full bg-white text-black font-black uppercase tracking-widest p-4 hover:bg-gray-200 transition-colors disabled:opacity-50"
+          >
+            {loading ? "VERIFYING..." : "AUTHENTICATE"}
+          </button>
+        </form>
+        
+        <div className="mt-8 pt-4 border-t border-white/20 text-center">
+           <p className="text-[10px] uppercase tracking-widest opacity-40">Manas Elite Sophomores</p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+
 export default function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [users, setUsers] = useState([]);
   const [nonAssociates, setNonAssociates] = useState([]);
   const [contests, setContests] = useState([]);
@@ -387,6 +486,10 @@ export default function App() {
     fetchContests();
     fetchLeaderboard(); 
   }, [fetchUsers, fetchContests, fetchLeaderboard]);
+
+  if (!isAuthenticated) {
+    return <LoginScreen onLogin={() => setIsAuthenticated(true)} />;
+  }
 
   return (
     <div className="min-h-screen bg-black text-white font-sans selection:bg-white selection:text-black">
