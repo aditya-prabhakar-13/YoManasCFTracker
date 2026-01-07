@@ -23,6 +23,7 @@ const TRACKED_USERS = [
   { handle: 'debugger6010', name: 'Aquib Aquil' },
   { handle: 'ANirudha27', name: 'Anirudha Pratap Singh' },
   { handle: 'Satoshi_Gekkouga', name: 'Abhishek Tyagi' },
+  { handle: 'Nova85', name: 'Aadhith R' },
 ];
 
 const NON_ASSOCIATES_USERS = [
@@ -30,7 +31,6 @@ const NON_ASSOCIATES_USERS = [
   { handle: 'Jahnavi.jnv', name: 'Jahnavi Priya' },
   { handle: 'fywer', name: 'Aditya D. Kakade' },
   { handle: 'd33p_singh', name: 'Deepenedra' },
-  { handle: 'Nova85', name: 'Aadhith R' },
   { handle: 'amank_24', name: 'Aman Kumar' },
   { handle: 'dredgarheisenberg24', name: 'Aniket Mandal' },
   { handle: 'GoldenOriole', name: 'Pratyaksha Jha' },
