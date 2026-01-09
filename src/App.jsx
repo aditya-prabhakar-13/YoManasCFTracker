@@ -36,6 +36,9 @@ const NON_ASSOCIATES_USERS = [
   { handle: 'dredgarheisenberg24', name: 'Aniket Mandal' },
   { handle: 'GoldenOriole', name: 'Pratyaksha Jha' },
   { handle: 'ayushk7019', name: 'Ayush Kumar' },
+  { handle: 'Nmj2504', name: 'Nimit' },
+  { handle: 'The_best-coder', name: 'Akshat Jain' },
+  { handle: 'code_with_akshat', name: 'Akshat Jain (alt)' },
 ];
 
 const getRatingStyle = (rating) => {
