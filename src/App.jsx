@@ -39,6 +39,9 @@ const NON_ASSOCIATES_USERS = [
   { handle: 'Nmj2504', name: 'Nimit' },
   { handle: 'The_best-coder', name: 'Akshat Jain' },
   { handle: 'code_with_akshat', name: 'Akshat Jain (alt)' },
+  { handle: 'Abdullahalom', name: 'Abdullah Alom' },
+  { handle: 'Bharath_2007', name: 'Bharath B. Sundar' },
+  { handle: 'tri27_ak', name: 'Akshat Tripathi' },
 ];
 
 const getRatingStyle = (rating) => {
