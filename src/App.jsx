@@ -41,6 +41,7 @@ const NON_ASSOCIATES_USERS = [
   { handle: 'Abdullahalom', name: 'Abdullah Alom' },
   { handle: 'Bharath_2007', name: 'Bharath B. Sundar' },
   { handle: 'tri27_ak', name: 'Akshat Tripathi' },
+  { handle: 'astrogeek_18', name: 'Aarya Shisode' }
 ];
 
 const getRatingStyle = (rating) => {
