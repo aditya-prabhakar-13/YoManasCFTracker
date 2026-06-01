@@ -182,8 +182,14 @@ async function fetchSolveCount(handle) {
 // --- COMPONENTS ---
 
 const UserCard = ({ user }) => {
+  const isDeveloper = user.handle === 'BurningBeast' || user.handle === 'AayushRathi';
   return (
     <div className="group relative p-4 md:p-6 bg-black border-2 border-white transition-all duration-300 hover:bg-white hover:text-black">
+      {isDeveloper && (
+        <span className="absolute top-4 right-4 md:top-6 md:right-6 px-2 py-0.5 bg-white text-black group-hover:bg-black group-hover:text-white border border-transparent group-hover:border-black text-[10px] font-black uppercase tracking-wider transition-colors z-10">
+          Developer
+        </span>
+      )}
       <div className="flex items-start justify-between">
         <div className="flex items-start space-x-4 md:space-x-5 w-full">
           <div className="relative shrink-0">
