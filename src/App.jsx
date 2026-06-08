@@ -419,7 +419,7 @@ export default function App() {
 
             <div className="flex flex-col justify-center">
               <h1 className="text-2xl font-black tracking-tighter text-white uppercase italic leading-none mb-1">
-                MANAS ELITE <span className="underline decoration-4 underline-offset-4 decoration-white">SOPHOMORES</span>
+                MANAS ELITE <span className="underline decoration-4 underline-offset-4 decoration-white">PRE-FINALYEARITES</span>
               </h1>
               <div className="flex items-center space-x-3 mt-1">
                  <div className="h-0.5 w-6 bg-white"></div>
