@@ -27,6 +27,7 @@ const TRACKED_USERS = [
 ];
 
 const NON_ASSOCIATES_USERS = [
+  { handle: 'MastPlanHai', name: 'Abhigyan Sinha' },
   { handle: 'catastrophic36', name: 'Aditya Deore' },
   { handle: 'Jahnavi.jnv', name: 'Jahnavi Priya' },
   { handle: 'fywer', name: 'Aditya D. Kakade' },
